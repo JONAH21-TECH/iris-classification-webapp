@@ -7,13 +7,11 @@ from sklearn.preprocessing import StandardScaler, label_binarize
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_curve, auc
 
-# Determine the absolute path to template folder
+# Determine the absolute path to template folder (works on Vercel and locally)
 current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
-
-template_dir = os.path.join(parent_dir, "templates")
+template_dir = os.path.join(current_dir, "templates")
 if not os.path.exists(template_dir):
-    template_dir = os.path.join(current_dir, "templates")
+    template_dir = os.path.join(os.path.dirname(current_dir), "templates")
 
 app = Flask(__name__, template_folder=template_dir)
 
@@ -72,10 +70,10 @@ scatter_data = {name: [] for name in target_names}
 for i in range(len(X)):
     species = target_names[y[i]]
     scatter_data[species].append({
-        "x": round(float(X[i, 2]), 2),  # Petal Length
-        "y": round(float(X[i, 3]), 2),  # Petal Width
-        "sl": round(float(X[i, 0]), 2), # Sepal Length
-        "sw": round(float(X[i, 1]), 2)  # Sepal Width
+        "x": round(float(X[i, 2]), 2),
+        "y": round(float(X[i, 3]), 2),
+        "sl": round(float(X[i, 0]), 2),
+        "sw": round(float(X[i, 1]), 2)
     })
 
 # 4. Evaluation Metrics
@@ -108,11 +106,14 @@ EVALUATION_METRICS = {
 
 
 @app.route("/")
+@app.route("/api/index")
+@app.route("/api")
 def index():
     return render_template("index.html")
 
 
 @app.route("/api/predict", methods=["POST"])
+@app.route("/predict", methods=["POST"])
 def predict():
     try:
         data = request.get_json(force=True)
@@ -142,8 +143,8 @@ def predict():
 
 
 @app.route("/api/analytics", methods=["GET"])
+@app.route("/analytics", methods=["GET"])
 def analytics():
-    """Returns all visual graphs data: ROC curves, feature importances, scatter data, and metrics."""
     return jsonify({
         "success": True,
         "metrics": EVALUATION_METRICS,
@@ -154,6 +155,7 @@ def analytics():
 
 
 @app.route("/api/health", methods=["GET"])
+@app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "healthy", "service": "iris-classifier-api"})
 
